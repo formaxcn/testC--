@@ -235,7 +235,7 @@ void scan_first(char * str)
 	{
 		if (reach_data == 0)//还未到达数据段（这里可能会有模式的选择）
 		{
-			if (idofstr != 58)
+			if (idofstr != 80)
 			{
 				err = "格式错误！数据段之前不能出现非关键字！";
 				outputerror(err);
@@ -260,7 +260,7 @@ void scan_first(char * str)
 		if (*it == ".CODE" || *it == ".code")
 			p_line--;						//.code是第0行
 
-		else if (idofstr == 60)				//第一次扫描记下所有标号
+		else if (idofstr == 82)				//第一次扫描记下所有标号
 		{
 			if (++it != split_str.end())
 			{
@@ -292,7 +292,7 @@ bool scan_second(char * str)
 	it = split_str.begin();
 
 	int idofstr = ident(*it);				//用于记录str的编号
-	if (reach_code == 1 && idofstr != 58)	//只读取实际代码，不再分析标号
+	if (reach_code == 1 && idofstr != 80)	//只读取实际代码，不再分析标号
 	{
 		cout << str << "      " << idofstr << endl;	//用于测试id是否识别正确
 		vector<string> operand;			//用于记录指令中的操作数
@@ -709,17 +709,49 @@ bool scan_second(char * str)
 			outcode += operand[0];
 			break;
 
-		case 59:
+		case 58://tlbp
+			outcode += "010000";
+			outcode += operand[1];
+			outcode += operand[2];
+			outcode += operand[0];
+			outcode += "00000001000";
+			break;
+
+		case 59://tlbr
+			outcode += "010000";
+			outcode += operand[1];
+			outcode += operand[2];
+			outcode += operand[0];
+			outcode += "00000000001";
+			break;
+
+		case 60://tlbwi
+			outcode += "010000";
+			outcode += operand[1];
+			outcode += operand[2];
+			outcode += operand[0];
+			outcode += "00000000010";
+			break;
+
+		case 61://tlbwr
+			outcode += "010000";
+			outcode += operand[1];
+			outcode += operand[2];
+			outcode += operand[0];
+			outcode += "00000000110";;
+			break;
+
+		case 81:
 			cout << "出错行数：" << total_line << "行!代码段中不能出现变量定义!" << endl;
 			//prog<<"出错行数："<<total_line<<"行!代码段中不能出现变量定义!"<<endl;
 			exit(1);
 
 
-		case 60://标号出统一翻译成nop
+		case 82://标号出统一翻译成nop
 			outcode = "00000000000000000000000000000000";
 			break;
 
-		case 61:
+		case 83:
 			outcode = "00000000000000000000000000000000";
 			break;
 
@@ -740,7 +772,7 @@ bool scan_second(char * str)
 
 
 
-int ident(string str)//1-57为指令，58为关键字，59为变量，60为标号,61为结束符
+int ident(string str)//1-57为指令，80为关键字，81为变量，82为标号,83为结束符
 {
 	if (str == "add" || str == "ADD")
 	{
@@ -1028,31 +1060,52 @@ int ident(string str)//1-57为指令，58为关键字，59为变量，60为标号,61为结束符
 		return 57;
 	}
 
+	if (str == "tlbp" || str == "TLBP")
+	{
+		return 54;
+	}
+
+	if (str == "tlbr" || str == "TLBR")
+	{
+		return 55;
+	}
+
+	if (str == "tlbwi" || str == "TLBWI")
+	{
+		return 56;
+	}
+
+	if (str == "tlbwr" || str == "TLBWR")
+	{
+		return 57;
+	}
+
+
 
 	if (str.substr(0, 5) == ".code" || str.substr(0, 5) == ".CODE")//以.data开头即说明到达数据段，当然后面可以接指定的地址
 	{
 		reach_code = 1;
-		return 58;
+		return 80;
 	}
 
 	if (str.substr(0, 5) == ".data" || str.substr(0, 5) == ".DATA")//以.code开头即说明到达代码段，当然后面可以接指定的地址
 	{
 		reach_data = 1;
-		return 58;
+		return 80;
 	}
 	if (str == ".model" || str == ".MODEL" || str == ".stack" || str == ".STACK")
 	{
-		return 58;
+		return 80;
 	}
 
 	if (str == "END" || str == "end")
 	{
-		return 61;		//必须是程序结束才能用到END
+		return 83;		//必须是程序结束才能用到END
 	}
 
 	if (str == ".space" || str == ".align")
 	{
-		return 62;		//伪指令
+		return 84;		//伪指令
 	}
 
 	if (str[0]<65 || str[0]>122 || (str[0] <= 96 && str[0] >= 91))
@@ -1063,9 +1116,9 @@ int ident(string str)//1-57为指令，58为关键字，59为变量，60为标号,61为结束符
 	else
 	{
 		if (str[str.length() - 1] == ':')//最后一个字符是：表示是标号
-			return 60;		//标号
+			return 82;		//标号
 		else
-			return 59;		//变量
+			return 81;		//变量
 	}
 }
 
@@ -1306,7 +1359,7 @@ void store_dataseg()
 
 		int idofstr = ident(*it);			//用于记录str的编号
 
-		if (idofstr == 58)		//.DATA指令
+		if (idofstr == 80)		//.DATA指令
 		{
 			++it;
 			if (it != split_str.end())//.DATA后面还有指定的数据段开始的地址,如.data 0x10000200
