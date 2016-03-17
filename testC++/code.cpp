@@ -68,6 +68,7 @@ void scan_first(char * str);	//第一次扫描
 bool scan_second(char * str);	//第二次扫描
 int ident(string str);			//返回指令str的编号
 int ident_reg(string name);		//识别名字为name的寄存器对应的寄存器编号
+int gettype(char * str);			//调试器使用区分type
 void store_dataseg();			//数据段的识别与存储
 void write_data();				//数据RAM的写入
 void outputerror(string err);	//输出error
@@ -168,8 +169,8 @@ int main()
 	cout << "第二次扫描..." << endl << endl;
 	cout << "开始写入prog.coe文件：" << endl;
 
-	prog << "memory_initialization_radix = 2;" << endl;
-	prog << "memory_initialization_vector =" << endl;
+	//prog << "memory_initialization_radix = 2;" << endl;
+	//prog << "memory_initialization_vector =" << endl;
 
 	int romLine = 0;//真正开始行
 	while (!code.eof())
@@ -188,7 +189,7 @@ int main()
 		/*下面开始第二遍扫描，把所有变量和标号多取出来记下*/
 		bool isROM=scan_second(str);
 		if (isROM == true){
-			mapCodeRom << romLine << "," << total_line<<endl;
+			mapCodeRom << romLine << "," << total_line<<","<<gettype(str)<<endl;
 			romLine++;
 		}
 		if (reach_code == 1)
@@ -274,7 +275,22 @@ void scan_first(char * str)
 	}//代码段的一句分析完成
 }
 
+int gettype(char *str){
+	vector<string> split_str;		//用于存放按照空格分割后的str
+	string tempword;
+	stringstream ss(str);
+	while (ss >> tempword)
+	{
+		if (tempword[0] == '#')		//#号后面的是注释
+			break;
+		split_str.push_back(tempword);
+	}
+	ss.clear();
+	it = split_str.begin();
 
+	int idofstr = ident(*it);
+	return idofstr;
+}
 
 bool scan_second(char * str)
 {
@@ -1062,22 +1078,22 @@ int ident(string str)//1-57为指令，80为关键字，81为变量，82为标号,83为结束符
 
 	if (str == "tlbp" || str == "TLBP")
 	{
-		return 54;
+		return 58;
 	}
 
 	if (str == "tlbr" || str == "TLBR")
 	{
-		return 55;
+		return 59;
 	}
 
 	if (str == "tlbwi" || str == "TLBWI")
 	{
-		return 56;
+		return 60;
 	}
 
 	if (str == "tlbwr" || str == "TLBWR")
 	{
-		return 57;
+		return 61;
 	}
 
 
@@ -1847,7 +1863,7 @@ void write_data()
 
 	cout << "开始写入RAM..." << endl;
 
-	ram << "memory_initialization_radix = 2;" << endl;
+	/*ram << "memory_initialization_radix = 2;" << endl;
 	ram << "memory_initialization_vector =" << endl;
 	ram0 << "memory_initialization_radix = 2;" << endl;
 	ram0 << "memory_initialization_vector =" << endl;
@@ -1856,7 +1872,7 @@ void write_data()
 	ram2 << "memory_initialization_radix = 2;" << endl;
 	ram2 << "memory_initialization_vector =" << endl;
 	ram3 << "memory_initialization_radix = 2;" << endl;
-	ram3 << "memory_initialization_vector =" << endl;
+	ram3 << "memory_initialization_vector =" << endl;*/
 
 	int line_ram = 0;				//记录ram的行数
 	int line_ram0 = 0;
